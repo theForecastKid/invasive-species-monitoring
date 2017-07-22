@@ -47,9 +47,7 @@ base_model = InceptionV3(weights='imagenet', include_top=False)
 
 for layer in base_model.layers[:260]:
    layer.trainable = False
-#for layer in base_model.layers[260:]:
-#   layer.trainable = True
-# add a global spatial average pooling layer
+
 x = base_model.output
 x = GlobalAveragePooling2D()(x)
 # let's add a fully-connected layer
@@ -57,18 +55,10 @@ x = Dense(2048, activation='relu')(x)
 x = Dropout(0.6)(x)
 x = Dense(512, activation='relu')(x)
 x = Dropout(0.5)(x)
-# and a logistic layer -- let's say we have 200 classes
 predictions = Dense(1, activation='sigmoid')(x)
 
 # this is the model we will train
 model = Model(inputs=base_model.input, outputs=predictions)
-
-# first: train only the top layers (which were randomly initialized)
-# i.e. freeze all convolutional InceptionV3 layers
-
-# compile the model (should be done *after* setting layers to non-trainable)
-#model.compile(optimizer=optimizers.SGD(lr=1e-4, momentum=0.9),
-#              loss='categorical_crossentropy')
 
 sgd = optimizers.SGD(lr = 0.001, decay = 1e-6, momentum = 0.90, nesterov = True)
 model.compile(loss = 'binary_crossentropy', optimizer = sgd, metrics=['accuracy'])
@@ -87,8 +77,6 @@ train_datagen = ImageDataGenerator(
     horizontal_flip=True,
     vertical_flip=True,
     fill_mode = 'nearest')
-
-#earlystop = keras.callbacks.EarlyStopping(monitor='val_loss', patience = 10, verbose=0, mode='auto')
 
 callbacks = [keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=10, verbose=2, mode='auto'),
             keras.callbacks.ModelCheckpoint('baseline.h5', monitor='val_loss', save_best_only=True, verbose=0)]
